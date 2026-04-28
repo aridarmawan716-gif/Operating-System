@@ -1,3 +1,3 @@
-.bash_history
-.viminfo
-.ssh/
+*.o
+btc_program
+
