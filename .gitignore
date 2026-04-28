@@ -1,3 +1,11 @@
 *.o
 btc_program
+.bash_history
+.bashrc
+.config/
+.gitconfig
+.ssh/
+.termux/
+.viminfo
+*.bin
 
