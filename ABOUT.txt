@@ -1,0 +1,5 @@
+Low-level Bitcoin hashing simulation optimized for ARM64. 
+Demonstrates seamless integration of C++ logic, C bridging, 
+and direct ARM64 Assembly register manipulation for performance.
+Developed and compiled in Termux (Android).
+
