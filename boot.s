@@ -1,45 +1,51 @@
-; boot.s - Bootloader 16-bit menggunakan NASM
-
-org 0x7C00          ; Memberitahu assembler bahwa kode ini dimuat di alamat 0x7C00
-bits 16             ; Mode 16-bit (Real Mode)
+; boot.s - Memuat Kernel dari Sektor 2
+org 0x7C00
+bits 16
 
 start:
-    ; 1. Inisialisasi Segment Register ke 0
     jmp 0:.init_segments
 
 .init_segments:
-    xor ax, ax      ; Mengosongkan register AX (AX = 0)
+    xor ax, ax
     mov ds, ax
     mov es, ax
     mov ss, ax
-    
-    ; 2. Inisialisasi Stack Pointer
     mov sp, 0x7C00
 
-    ; 3. Cetak Karakter Menggunakan BIOS Interrupt
-    mov si, msg     ; Masukkan alamat memori pesan ke SI
+    ; === PROSES MEMUAT KERNEL ===
+    mov ax, 0x1000
+    mov es, ax          ; ES = 0x1000
+    mov bx, 0           ; ES:BX = 0x1000:0000 (Di sini posisi mov bx, 0 yang benar)
 
+    mov ah, 0x02        ; Fungsi BIOS: Read Sectors
+    mov al, 1           ; Jumlah sektor yang dibaca
+    mov ch, 0           ; Cylinder 0
+    mov cl, 2           ; Sektor 2 (Tempat kernel.bin berada)
+    mov dh, 0           ; Head 0
+    int 0x13            ; Panggil BIOS Disk Interrupt
+    jc disk_error       ; Jika error, lompat ke disk_error
+
+    ; === LOMPAT KE KERNEL ===
+    jmp 0x1000:0000     ; Lompat ke alamat memori kernel
+
+disk_error:
+    mov si, err_msg
 print_loop:
-    lodsb           ; Ambil 1 byte dari [SI] ke AL, lalu SI++
-    or al, al       ; Cek apakah karakter = 0 (Null terminator)
-    jz halt         ; Jika 0, selesai cetak
-
-    mov ah, 0x0E    ; BIOS teletype output
-    mov bh, 0       ; Page number 0
-    mov bl, 0x07    ; Warna standar text
-    int 0x10        ; Panggil BIOS Video Interrupt
+    lodsb
+    or al, al
+    jz halt
+    mov ah, 0x0E
+    int 0x10
     jmp print_loop
 
 halt:
-    cli             ; Matikan interrupt
+    cli
 hang:
-    hlt             ; Hentikan CPU
+    hlt
     jmp hang
 
-; Data Pesan
-msg db "Hello, OS 16-Bit dari NASM!", 13, 10, 0  ; 13, 10 adalah Carriage Return & Line Feed (\r\n)
+err_msg db "Gagal memuat kernel!", 13, 10, 0
 
-; 4. Boot Signature (Wajib 512 byte dan diakhiri 0xAA55)
-times 510 - ($ - $$) db 0   ; Isi sisa byte yang kosong dengan angka 0 hingga byte ke-510
-dw 0xAA55                   ; 2 byte terakhir diisi signature boot (0x55 dan 0xAA)
+times 510 - ($ - $$) db 0
+dw 0xAA55
 

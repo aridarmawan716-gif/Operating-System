@@ -2,6 +2,12 @@
 bits 16
 
 kernel_start:
+    ; --- PERBAIKAN: Samakan Segment Data dengan Code Segment ---
+    mov ax, cs      ; Ambil nilai CS (0x1000) yang diset oleh bootloader
+    mov ds, ax      ; Masukkan ke DS
+    mov es, ax      ; Masukkan ke ES
+    ; -----------------------------------------------------------
+
     mov si, kernel_msg
     call print_string
     
